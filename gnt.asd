@@ -5,4 +5,5 @@
   :serial t
   :components
   ((:file "package")
+   (:file "aux")
    (:file "gnt")))
