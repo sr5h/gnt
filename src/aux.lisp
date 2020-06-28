@@ -2,11 +2,11 @@
 
 (in-package #:gnt)
 
-(defun insert-as-sorted-incr (item seq key)
-  (funcall (insert :test #'<= :key key) item seq))
+(defun insert-as-sorted-incr (item seq &optional (key #'identity))
+  (funcall (insert :test #'<= :key key :duplicate nil) item seq))
 
-(defun insert-as-sorted-decr (item seq key)
-  (funcall (insert :test #'>= :key key) item seq))
+(defun insert-as-sorted-decr (item seq &optional (key #'identity))
+  (funcall (insert :test #'>= :key key :duplicate nil) item seq))
 
 (defun insert (&key (key #'identity) (test #'eql) (duplicate t) (read nil))
   #'(lambda (item seq)
@@ -23,7 +23,7 @@
 
 (defun select (&key (key #'identity) (test #'<) (combine-fn #'+) (acc 0.0)
 		 (treat-nil #'(lambda ()
-				(error "ERROR: can't find a proper parent."))))
+				nil)))
   #'(lambda (test-value seq)
       (cond ((null seq) (funcall treat-nil))
 	    (t
