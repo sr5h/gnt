@@ -20,3 +20,19 @@
 			      :duplicate duplicate
 			      :read (append read (list (car seq))))
 		      item (cdr seq))))))
+
+(defun select (&key (key #'identity) (test #'<) (combine-fn #'+) (acc 0.0)
+		 (treat-nil #'(lambda ()
+				(error "ERROR: can't find a proper parent."))))
+  #'(lambda (test-value seq)
+      (cond ((null seq) (funcall treat-nil))
+	    (t
+	     (let ((new (funcall combine-fn acc (funcall key (car seq)))))
+	       (cond ((funcall test test-value new) (car seq))
+		     (t
+		      (funcall (select :key key
+				       :test test
+				       :combine-fn combine-fn
+				       :acc new
+				       :treat-nil treat-nil)
+			       test-value (cdr seq)))))))))
