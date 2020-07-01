@@ -21,18 +21,30 @@
 			      :read (append read (list (car seq))))
 		      item (cdr seq))))))
 
-(defun select (&key (key #'identity) (test #'<) (combine-fn #'+) (acc 0.0)
+(defun select (&key (key #'identity) (test #'<) (update-fn (memo-random-float)) (combine-fn #'+) (acc 0.0)
 		 (treat-nil #'(lambda ()
 				nil)))
-  #'(lambda (test-value seq)
+  #'(lambda (seq)
       (cond ((null seq) (funcall treat-nil))
 	    (t
 	     (let ((new (funcall combine-fn acc (funcall key (car seq)))))
-	       (cond ((funcall test test-value new) (car seq))
+	       (cond ((funcall test (funcall update-fn) new) (car seq))
 		     (t
 		      (funcall (select :key key
 				       :test test
+				       :update-fn update-fn
 				       :combine-fn combine-fn
 				       :acc new
 				       :treat-nil treat-nil)
-			       test-value (cdr seq)))))))))
+			       (cdr seq)))))))))
+
+(defun memo-random (max)
+  (let ((before nil))			; only 1 called
+    #'(lambda ()
+	(print before)
+	(if before
+	    before
+	    (setf before (random max))))))
+
+(defun memo-random-float ()
+  (memo-random 1.0))
