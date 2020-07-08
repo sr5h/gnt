@@ -16,19 +16,17 @@
 
 (defun generate-next (population
 		      &key
+			(fitness-fn #'(lambda (i) (slot-value i 'fitness)))
 			(p-combi-fn)
 			(select-fn)
 			(meiosis-1-fn)
 			(meiosis-2-fn)
-			(select-m-indvs-fn #'(lambda (indvs)
-					       ))
+			(select-m-indvs-fn (select-m-indvs fitness-fn))
 			(combi-fn #'(lambda (i1 i2) ; not sorted, which is suitable.
 				      (append (slot-value i1 'chromosomes)
 					      (slot-value i2 'chromosomes))))
-			(fitness-fn #'(lambda (i)
-					(slot-value i 'fitness)))
-			(set-indv-fitness-fn #'(lambda (f1 f2)
-						 (+ f1 f2)))
+
+			(set-indv-fitness-fn #'(lambda (f1 f2) (+ f1 f2)))
 			(max (length population))
 			(c 0)
 			(new-population nil)
@@ -87,15 +85,28 @@
 							   (funcall get-chromosomes-fn (car indvs)))))))
 	      (cdr indvs))))))
 
-(defun combi (select-fn)
+
+
+(defun combi (select-fn get-chromosomes-fn)
   #'(lambda (indvs1 indvs2)
       (let ((selected1 (funcall select-fn indvs1))
 	    (selected2 (funcall select-fn indvs2)))
-	(list selected1 selected2))))
+	(list (funcall get-chromosomes-fn selected1) (funcall get-chromosomes-fn selected2)))))
 
 (defstruct chromatid
   nucleic-acids
   fitness)
 
-(defun select-m-indvs (indvs)
-  (funcall (select) indvs))			;:todo: (slot-value ...)
+(defun select-m-indvs (get-indv-fitness-fn)
+  (select :key get-indv-fitness-fn))		;:key: todo: (slot-value ...)
+
+
+(defun set-indv-fitness ()			; f1 f2 f3 ....
+  #'(lambda (&optional (acc nil) &rest args)
+      (cond ((null args) acc)
+	    (t
+	     (cond ((null acc) (apply (set-indv-fitness) args))
+		   (t
+		    (cond ((< acc (car args)) (apply (set-indv-fitness) args))
+			  (t
+			   (apply (set-indv-fitness) acc (cdr args))))))))))

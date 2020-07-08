@@ -48,3 +48,21 @@
 
 (defun memo-random-float ()
   (memo-random 1.0))
+
+(defun sr-format (p &rest args)
+  (apply (%sr-format :postfix p) args))
+
+(defun %sr-format (&key (t-or-nil t) (prefix "") (postfix "") (acc nil))
+  #'(lambda (&rest args)
+      (cond ((null args) (apply #'format t-or-nil (concatenate 'string prefix
+							   (concatenate 'string postfix
+									"~%"))
+				acc))
+	    (t
+	     (apply (%sr-format :t-or-nil t-or-nil
+				 :prefix prefix
+				 :postfix (concatenate 'string
+						       postfix
+						       "~a ")
+				 :acc (append acc (list (car args))))
+		    (cdr args))))))
